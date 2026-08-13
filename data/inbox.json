@@ -23,5 +23,7 @@
 
   {"lead_id": "L015", "email": "owen@clarkebindery.co.uk", "direction": "sent", "subject": "Intro from the team", "timestamp": "2026-08-09T09:00:00Z"},
 
-  {"lead_id": "L016", "email": "freya@nashrobotics.com", "direction": "sent", "subject": "Intro: robotics partnership", "timestamp": "2026-08-10T10:00:00Z"}
+  {"lead_id": "L016", "email": "freya@nashrobotics.com", "direction": "sent", "subject": "Intro: robotics partnership", "timestamp": "2026-08-10T10:00:00Z"},
+
+  {"lead_id": "L017", "email": "jamie@oseitextiles.co.uk", "direction": "sent", "subject": "Intro from the team", "timestamp": "2026-08-12T08:00:00Z"}
 ]

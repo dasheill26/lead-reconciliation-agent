@@ -6,6 +6,10 @@ update at different rates and sometimes disagree. It decides which source to
 trust per-field, detects when a lead has moved through the pipeline, and
 reports exactly what it cost in API calls and model inference to do it.
 
+[![tests](https://github.com/dasheill26/lead-reconciliation-agent/actions/workflows/tests.yml/badge.svg)](https://github.com/dasheill26/lead-reconciliation-agent/actions/workflows/tests.yml)
+![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-yellow.svg)
+
 Built for a take-home engineering assessment. AI-assisted (Claude), and every
 design decision below is one I can walk through and defend — that was the
 actual point of the exercise, not just getting it to run.
@@ -75,12 +79,30 @@ classification given a short, structured prompt — exactly the kind of task
 where the frontier model buys you nothing. Using the cheapest current model
 for a cheap task is itself part of the cost story.
 
+**6. Stale scrape data is deprioritized, not silently trusted.** Every
+scrape record carries a `scraped_at` timestamp. If it's older than 7 days
+(`STALE_SCRAPE_THRESHOLD_DAYS`), the agent excludes it from the canonical
+lead's enrichment fields entirely — the prospect still gets discovered
+(existence is still useful even from old data), but industry/company-size
+data older than a week isn't trusted for a live pipeline decision. This is
+the brief's own third example ("web scrape has stale data... deprioritise
+it") and it's a real behavior change, not just a flag: `industry` and
+`employee_count` come back `None` for a stale record, logged with the
+exact age.
+
+**7. Malformed data degrades gracefully.** Real CRM exports have typos,
+legacy values, and half-migrated fields (`data/crm.csv` includes one:
+`TBD` as a stage value). Rather than crashing on an unrecognized stage, the
+agent logs it, falls back to the (always well-formed) email-evidence stage,
+and keeps going — one bad row shouldn't take down a run over thousands of
+leads.
+
 ## Example output
 
 ```
 $ python run.py --once
 
-Reconciled 16 leads (4 had a conflict to resolve).
+Reconciled 17 leads (5 had a conflict to resolve).
 
 ID    Name            CRM Stage   Canonical Stage     Note
 ----------------------------------------------------------------------------------------------------
@@ -88,24 +110,27 @@ L001  Priya Shah      qualified   emailed             Resolved via LLM read of t
 L009  Hannah Ross     qualified   emailed             Resolved via LLM read of the conflicting evidence...
 L015  Owen Clarke     qualified   emailed             CRM claims 'qualified' with no reply evidence, but deal...
 L016  Freya Nash      qualified   qualified           Resolved via LLM read of the conflicting evidence...
+L017  Jamie Osei      TBD         emailed             CRM stage 'TBD' unrecognized — fell back to email-evide...
 ...
 
 ============================================================
 COST & DECISION REPORT
 ============================================================
 API calls made:        6  {'crm_fetch': 1, 'inbox_fetch': 1, 'scrape_fetch': 1, 'anthropic_messages': 3}
-Rows touched:          59
-Leads reconciled:      16
+Rows touched:          62
+Leads reconciled:      17
 LLM calls (real):      0
 LLM calls (simulated): 3
   -> SIMULATED MODE: no ANTHROPIC_API_KEY set, cost below is
      an estimate using real Haiku 4.5 pricing on approximated
      token counts, not a real bill.
 Model inference cost:  £0.0004
-Cost per lead:         £0.00003
+Cost per lead:         £0.00002
 
 Decision log:
   - Source 'crm' changed since last run — processing.
+  - L001: scrape data is 12d old (> 7d threshold) — deprioritizing, not trusting for enrichment this run.
+  - L017: CRM stage 'TBD' is not a recognized value ([...]) — treating as unknown, falling back to email evidence.
   - L015 (Owen Clarke): conflict below value threshold (£2800 < £10,000) — resolved by rule, not escalated.
   - BUDGET CHECK: 3 leads need LLM escalation, estimated £0.0018 fits within £0.0100 budget — escalating all.
   - LLM (SIMULATED): L001 (Priya Shah) -> 'emailed' [~172 in / 3 out tokens, estimated]
@@ -163,18 +188,22 @@ simulated (clearly labeled) LLM calls instead of real ones.
 
 ```
 lead-reconciliation-agent/
+├── .github/workflows/tests.yml  # CI: runs pytest + a live agent run on every push
 ├── agent/
 │   ├── sources.py         # loaders + change-detection (hash-based skip logic)
-│   ├── reconciler.py      # trust rules, conflict detection, stage inference
+│   ├── reconciler.py      # trust rules, conflict detection, staleness, stage inference
 │   ├── llm_decider.py     # dual-mode (real/simulated) ambiguous-case resolver
 │   ├── cost_tracker.py    # single source of truth for the cost report
-│   └── planner.py         # orchestrates a run; the two "notice and adapt" decisions
+│   └── planner.py         # orchestrates a run; value-threshold and budget decisions
 ├── data/
-│   ├── crm.csv            # mock CRM export
+│   ├── crm.csv            # mock CRM export (includes one deliberately malformed row)
 │   ├── inbox.json         # mock email events
-│   └── scrape.json        # mock scraped prospect list
+│   └── scrape.json        # mock scraped prospect list (includes stale entries)
 ├── state/                 # runtime state (checksums, last report) — gitignored
-├── tests/test_reconciler.py
+├── tests/
+│   ├── test_reconciler.py   # trust rules, conflicts, staleness, malformed data
+│   ├── test_planner.py      # value-threshold and budget logic, in isolation
+│   └── test_cost_tracker.py # cost math — where a silent bug would be worst
 └── run.py                 # CLI entrypoint
 ```
 
@@ -218,8 +247,13 @@ for what would be `crm_api.get_updated_since(...)`, `imap.fetch(...)`, and
 
 ## Tests
 
+17 tests across three files — trust rules and staleness/malformed-data
+handling (`test_reconciler.py`), the value-threshold and budget decisions
+in isolation (`test_planner.py`), and the cost math itself (`test_cost_tracker.py`).
+Runs automatically on every push via GitHub Actions (see badge above).
+
 ```bash
-pytest tests/
+pytest tests/ -v
 # or, no pytest installed:
-python tests/test_reconciler.py
+python tests/test_reconciler.py && python tests/test_planner.py && python tests/test_cost_tracker.py
 ```
