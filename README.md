@@ -182,7 +182,7 @@ back to the deterministic rule this run.)
 This is a CLI/scheduled agent, not a web app by design — but there's a
 small read-only dashboard (`webapp.py`) that runs the real agent and
 displays the actual output in a browser, for anyone who wants to see it
-work without cloning the repo. **Live at: [add URL once deployed]**
+work without cloning the repo. **Live at: https://lead-reconciliation-agent.onrender.com**
 
 It always runs in simulated LLM mode, deliberately — a public,
 unauthenticated page shouldn't be able to trigger real paid API calls on
