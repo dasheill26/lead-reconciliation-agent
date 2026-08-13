@@ -177,7 +177,23 @@ $ python run.py --once --budget 0.001
 that gets the real read; Priya Shah's £18,000 and Hannah Ross's £12,200 fall
 back to the deterministic rule this run.)
 
-## Running it
+## Live demo
+
+This is a CLI/scheduled agent, not a web app by design — but there's a
+small read-only dashboard (`webapp.py`) that runs the real agent and
+displays the actual output in a browser, for anyone who wants to see it
+work without cloning the repo. **Live at: [add URL once deployed]**
+
+It always runs in simulated LLM mode, deliberately — a public,
+unauthenticated page shouldn't be able to trigger real paid API calls on
+every visitor. Run it yourself locally for the real thing:
+
+```bash
+pip install -r requirements.txt
+python webapp.py    # http://127.0.0.1:5001
+```
+
+## Running it (CLI)
 
 ```bash
 python -m venv .venv

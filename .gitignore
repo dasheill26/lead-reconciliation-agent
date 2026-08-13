@@ -5,6 +5,7 @@ venv/
 testvenv/
 freshvenv/
 verifyvenv/
+webvenv/
 .env
 state/checksums.json
 state/last_run_report.json
