@@ -48,10 +48,14 @@ def do_run(budget_gbp: float):
         note = (l["resolution_note"] or "")[:55]
         print(f"{l['lead_id']:<6}{name:<16}{crm_stage:<12}{canonical:<20}{note}")
 
-    tracker.print_report(leads_reconciled=len(leads))
+    # Computed exactly once, so the printed report, the JSON snapshot, and
+    # the history log line can never disagree with each other on numbers
+    # like compute_time_seconds that change with every call.
+    cost_report = tracker.report(leads_reconciled=len(leads))
+    tracker.print_report(cost_report)
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
-    report = {"leads": leads, "cost_report": tracker.report(len(leads))}
+    report = {"leads": leads, "cost_report": cost_report}
 
     # Snapshot of the most recent run - easy to inspect/diff.
     out_path = os.path.join(OUTPUT_DIR, "last_run_report.json")
@@ -66,8 +70,9 @@ def do_run(budget_gbp: float):
             "run_at": tracker.started_at,
             "leads_reconciled": len(leads),
             "conflicts_resolved": len(conflicts),
-            "total_api_calls": sum(tracker.api_calls_by_type.values()),
-            "model_inference_cost_gbp": round(tracker.llm_inference_cost_gbp, 4),
+            "compute_time_seconds": cost_report["compute_time_seconds"],
+            "total_api_calls": cost_report["total_api_calls"],
+            "model_inference_cost_gbp": cost_report["model_inference_cost_gbp"],
             "llm_calls_real": tracker.llm_calls_real,
             "llm_calls_simulated": tracker.llm_calls_simulated,
         }) + "\n")

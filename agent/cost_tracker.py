@@ -17,6 +17,7 @@ more precision than it has.
 from dataclasses import dataclass, field
 from collections import defaultdict
 from datetime import datetime, timezone
+import time
 
 HAIKU_INPUT_PRICE_PER_MTOK_USD = 1.00
 HAIKU_OUTPUT_PRICE_PER_MTOK_USD = 5.00
@@ -33,6 +34,7 @@ class CostTracker:
     llm_calls_simulated: int = 0
     decisions: list = field(default_factory=list)  # human-readable decision log
     started_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    _perf_start: float = field(default_factory=time.perf_counter)
 
     def record_api_call(self, call_type: str, count: int = 1):
         """Count a non-LLM API call (source fetch, etc). No £ cost attached —
@@ -75,6 +77,7 @@ class CostTracker:
         cost_per_lead = round(cost_gbp / leads_reconciled, 5) if leads_reconciled else 0.0
         return {
             "run_started_at": self.started_at,
+            "compute_time_seconds": round(time.perf_counter() - self._perf_start, 4),
             "total_api_calls": total_api_calls,
             "api_calls_by_type": dict(self.api_calls_by_type),
             "rows_touched": self.rows_touched,
@@ -88,11 +91,12 @@ class CostTracker:
             "decisions": self.decisions,
         }
 
-    def print_report(self, leads_reconciled: int):
-        r = self.report(leads_reconciled)
+    def print_report(self, report: dict):
+        r = report
         print("\n" + "=" * 60)
         print("COST & DECISION REPORT")
         print("=" * 60)
+        print(f"Compute time:          {r['compute_time_seconds']}s")
         print(f"API calls made:        {r['total_api_calls']}  {r['api_calls_by_type']}")
         print(f"Rows touched:          {r['rows_touched']}")
         print(f"Leads reconciled:      {r['leads_reconciled']}")

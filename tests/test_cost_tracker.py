@@ -51,10 +51,21 @@ def test_simulated_vs_real_tracked_separately():
     assert r["llm_calls_real"] == 1
 
 
+def test_compute_time_is_tracked():
+    """The brief explicitly asks for cost in 'API calls and compute time' -
+    this is the compute time half of that."""
+    t = CostTracker()
+    r = t.report(leads_reconciled=1)
+    assert "compute_time_seconds" in r
+    assert isinstance(r["compute_time_seconds"], float)
+    assert r["compute_time_seconds"] >= 0
+
+
 if __name__ == "__main__":
     test_api_calls_counted_by_type()
     test_llm_cost_matches_manual_calculation()
     test_cost_per_lead_divides_correctly()
     test_zero_leads_reconciled_does_not_divide_by_zero()
     test_simulated_vs_real_tracked_separately()
+    test_compute_time_is_tracked()
     print("All cost tracker tests passed.")

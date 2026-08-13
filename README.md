@@ -110,6 +110,13 @@ agent logs it, falls back to the (always well-formed) email-evidence stage,
 and keeps going — one bad row shouldn't take down a run over thousands of
 leads.
 
+**8. Compute time, not just spend.** The brief specifically asks for cost
+"in API calls and compute time" — two distinct things. `CostTracker` times
+each run with `time.perf_counter()` and reports elapsed seconds alongside
+the £ figures, computed exactly once per run and reused everywhere (the
+printed report, the JSON snapshot, and the history log line), so the same
+run can never report two different numbers for it.
+
 ## Example output
 
 ```
@@ -129,6 +136,7 @@ L017  Jamie Osei      TBD         emailed             CRM stage 'TBD' unrecogniz
 ============================================================
 COST & DECISION REPORT
 ============================================================
+Compute time:          0.0011s
 API calls made:        6  {'crm_fetch': 1, 'inbox_fetch': 1, 'scrape_fetch': 1, 'anthropic_messages': 3}
 Rows touched:          62
 Leads reconciled:      17
