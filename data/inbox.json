@@ -1,0 +1,27 @@
+[
+  {"lead_id": "L001", "email": "priya.shah@nimbusretail.co.uk", "direction": "sent", "subject": "Intro: working with Nimbus Retail", "timestamp": "2026-08-09T09:00:00Z"},
+
+  {"lead_id": "L002", "email": "tom@fieldingco.com", "direction": "sent", "subject": "Quick question about your rollout", "timestamp": "2026-08-11T14:00:00Z"},
+
+  {"lead_id": "L003", "email": "ana.costa@costalogistics.eu", "direction": "sent", "subject": "Following up on your enquiry", "timestamp": "2026-08-08T10:00:00Z"},
+  {"lead_id": "L003", "email": "ana.costa@costalogistics.eu", "direction": "received", "subject": "Re: Following up on your enquiry", "timestamp": "2026-08-09T11:20:00Z"},
+
+  {"lead_id": "L005", "email": "sofia@marinlegal.com", "direction": "sent", "subject": "Intro from the team", "timestamp": "2026-08-06T09:00:00Z"},
+  {"lead_id": "L005", "email": "sofia@marinlegal.com", "direction": "received", "subject": "Re: Intro from the team", "timestamp": "2026-08-08T16:30:00Z"},
+
+  {"lead_id": "L006", "email": "ben@okadigital.io", "direction": "sent", "subject": "Saw your product launch", "timestamp": "2026-08-11T10:15:00Z"},
+
+  {"lead_id": "L007", "email": "grace.lin@linmfg.com", "direction": "sent", "subject": "Intro: manufacturing partners", "timestamp": "2026-08-05T09:00:00Z"},
+  {"lead_id": "L007", "email": "grace.lin@linmfg.com", "direction": "received", "subject": "Re: Intro: manufacturing partners", "timestamp": "2026-08-07T13:00:00Z"},
+
+  {"lead_id": "L009", "email": "hannah@rossconsulting.co.uk", "direction": "sent", "subject": "Following up", "timestamp": "2026-08-05T10:00:00Z"},
+
+  {"lead_id": "L010", "email": "carlos@mendezfreight.com", "direction": "sent", "subject": "Quick intro", "timestamp": "2026-08-11T16:45:00Z"},
+
+  {"lead_id": "L012", "email": "ilya@petrovsys.com", "direction": "sent", "subject": "Intro: systems integration", "timestamp": "2026-08-03T09:00:00Z"},
+  {"lead_id": "L012", "email": "ilya@petrovsys.com", "direction": "received", "subject": "Re: Intro: systems integration", "timestamp": "2026-08-04T09:30:00Z"},
+
+  {"lead_id": "L015", "email": "owen@clarkebindery.co.uk", "direction": "sent", "subject": "Intro from the team", "timestamp": "2026-08-09T09:00:00Z"},
+
+  {"lead_id": "L016", "email": "freya@nashrobotics.com", "direction": "sent", "subject": "Intro: robotics partnership", "timestamp": "2026-08-10T10:00:00Z"}
+]

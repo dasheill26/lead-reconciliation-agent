@@ -1,0 +1,18 @@
+[
+  {"lead_id": "L001", "company": "Nimbus Retail", "industry": "E-commerce", "employee_count": 85, "scraped_at": "2026-08-01T00:00:00Z"},
+  {"lead_id": "L002", "company": "Fielding & Co", "industry": "Professional Services", "employee_count": 12, "scraped_at": "2026-08-11T00:00:00Z"},
+  {"lead_id": "L003", "company": "Costa Logistics", "industry": "Logistics", "employee_count": 210, "scraped_at": "2026-07-30T00:00:00Z"},
+  {"lead_id": "L004", "company": "Reid Interiors", "industry": "Design", "employee_count": 6, "scraped_at": "2026-08-04T00:00:00Z"},
+  {"lead_id": "L005", "company": "Marin Legal", "industry": "Legal", "employee_count": 40, "scraped_at": "2026-07-28T00:00:00Z"},
+  {"lead_id": "L006", "company": "Okafor Digital", "industry": "Software", "employee_count": 18, "scraped_at": "2026-08-11T00:00:00Z"},
+  {"lead_id": "L007", "company": "Lin Manufacturing", "industry": "Manufacturing", "employee_count": 340, "scraped_at": "2026-07-25T00:00:00Z"},
+  {"lead_id": "L008", "company": "Patel Ventures", "industry": "VC / Investment", "employee_count": 9, "scraped_at": "2026-08-12T00:00:00Z"},
+  {"lead_id": "L009", "company": "Ross Consulting", "industry": "Consulting", "employee_count": 22, "scraped_at": "2026-08-02T00:00:00Z"},
+  {"lead_id": "L010", "company": "Mendez Freight", "industry": "Logistics", "employee_count": 60, "scraped_at": "2026-08-11T00:00:00Z"},
+  {"lead_id": "L011", "company": "Bennett Studio", "industry": "Design", "employee_count": 4, "scraped_at": "2026-08-12T00:00:00Z"},
+  {"lead_id": "L012", "company": "Petrov Systems", "industry": "Software", "employee_count": 150, "scraped_at": "2026-07-20T00:00:00Z"},
+  {"lead_id": "L015", "company": "Clarke Bindery", "industry": "Print & Publishing", "employee_count": 5, "scraped_at": "2026-08-10T00:00:00Z"},
+  {"lead_id": "L016", "company": "Nash Robotics", "industry": "Robotics", "employee_count": 65, "scraped_at": "2026-08-11T00:00:00Z"},
+  {"lead_id": "L013", "company": "Harlow Bakery Co", "industry": "Food & Beverage", "employee_count": 15, "scraped_at": "2026-08-12T00:00:00Z"},
+  {"lead_id": "L014", "company": "Vance Architecture", "industry": "Architecture", "employee_count": 28, "scraped_at": "2026-08-12T00:00:00Z"}
+]

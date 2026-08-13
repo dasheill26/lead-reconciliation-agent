@@ -1,0 +1,15 @@
+lead_id,name,company,email,stage,deal_value_gbp,last_updated
+L001,Priya Shah,Nimbus Retail,priya.shah@nimbusretail.co.uk,qualified,18000,2026-08-10T09:15:00Z
+L002,Tom Fielding,Fielding & Co,tom@fieldingco.com,emailed,4200,2026-08-11T14:02:00Z
+L003,Ana Costa,Costa Logistics,ana.costa@costalogistics.eu,replied,9600,2026-08-09T11:30:00Z
+L004,Marcus Reid,Reid Interiors,m.reid@reidinteriors.co.uk,new,2100,2026-08-05T08:00:00Z
+L005,Sofia Marin,Marin Legal,sofia@marinlegal.com,qualified,26500,2026-08-08T16:45:00Z
+L006,Ben Okafor,Okafor Digital,ben@okadigital.io,emailed,3300,2026-08-11T10:20:00Z
+L007,Grace Lin,Lin Manufacturing,grace.lin@linmfg.com,replied,15800,2026-08-07T13:10:00Z
+L008,Dev Patel,Patel Ventures,dev@patelventures.com,new,5400,2026-08-12T09:00:00Z
+L009,Hannah Ross,Ross Consulting,hannah@rossconsulting.co.uk,qualified,12200,2026-08-06T15:30:00Z
+L010,Carlos Mendez,Mendez Freight,carlos@mendezfreight.com,emailed,7800,2026-08-11T17:00:00Z
+L011,Zoe Bennett,Bennett Studio,zoe@bennettstudio.co.uk,new,1900,2026-08-12T11:15:00Z
+L012,Ilya Petrov,Petrov Systems,ilya@petrovsys.com,replied,21000,2026-08-04T09:40:00Z
+L015,Owen Clarke,Clarke Bindery,owen@clarkebindery.co.uk,qualified,2800,2026-08-10T12:00:00Z
+L016,Freya Nash,Nash Robotics,freya@nashrobotics.com,qualified,31500,2026-08-11T15:20:00Z

@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+testvenv/
+.env
+state/checksums.json
+state/last_run_report.json
+.pytest_cache/
