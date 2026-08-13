@@ -28,10 +28,11 @@ planner.py for where that line is drawn and why.
 """
 
 from datetime import datetime, timezone
+import os
 
 STAGE_ORDER = {"new": 0, "emailed": 1, "replied": 2, "qualified": 3}
 REQUIRES_REPLY_EVIDENCE = {"replied", "qualified"}
-STALE_SCRAPE_THRESHOLD_DAYS = 7
+STALE_SCRAPE_THRESHOLD_DAYS = int(os.environ.get("STALE_SCRAPE_THRESHOLD_DAYS", 7))
 
 
 def _parse_ts(ts: str) -> datetime:
@@ -155,14 +156,19 @@ def reconcile_all(crm: dict, inbox: dict, scrape: dict, cost_tracker, now: datet
             lead["canonical_stage"] = None  # not yet resolved
             lead["resolution_note"] = None
         elif STAGE_ORDER[crm_stage] < STAGE_ORDER[email_stage]:
-            # CRM hasn't caught up to reality — inbox is ground truth here,
-            # and outranks CRM on quality (1.0 vs 0.75), so resolve immediately.
+            # CRM hasn't caught up to reality. This is where recency AND
+            # quality both matter: the inbox event is more recent than the
+            # CRM's last update (that's *why* CRM looks behind), and inbox
+            # also outranks CRM on quality (1.0 vs 0.75) as the ground-truth
+            # source for reply evidence. Both point the same way here, so
+            # the resolution is immediate and confident.
             lead["conflict_type"] = "crm_stale"
             lead["needs_llm_escalation"] = False
             lead["canonical_stage"] = email_stage
             lead["resolution_note"] = (
-                f"CRM says '{crm_stage}' but inbox shows '{email_stage}' evidence "
-                f"(quality 1.0 vs 0.75) — trusting inbox, CRM is behind."
+                f"Inbox shows '{email_stage}' as of {last_email_at}, more recent than CRM's "
+                f"last update ({crm_row['last_updated']}) which still says '{crm_stage}' — "
+                f"trusting inbox on both recency and quality (1.0 vs 0.75)."
             )
         else:
             lead["conflict_type"] = None

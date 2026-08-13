@@ -42,6 +42,19 @@ So the agent is built in two tiers:
 These are fixed, documented business judgement calls, not learned weights —
 deliberately, so they're auditable and arguable rather than a black box.
 
+Recency and quality both drive the `crm_stale` resolution specifically: the
+resolution note names the actual timestamp of the inbox event and of the
+CRM's last update, not just an abstract quality score, so *why* inbox wins
+in a given case is visible in the log, not just asserted. Both dimensions
+happen to agree in this build (the more recent source is also the
+higher-quality one for stage evidence) — a case where they genuinely
+conflicted would be exactly the kind of thing worth escalating, similar to
+the value-gated LLM path.
+
+`LLM_ESCALATION_THRESHOLD_GBP` and `STALE_SCRAPE_THRESHOLD_DAYS` are both
+overridable via environment variables (see `.env.example`) rather than
+requiring a code change to retune for a different business.
+
 ## Design decisions (the parts worth defending)
 
 **1. Value-gated LLM escalation.** When the CRM claims a stage (`replied` or
@@ -184,11 +197,46 @@ Without an API key, everything above still works exactly the same way —
 the decision logic, the thresholds, the budget prioritization — just with
 simulated (clearly labeled) LLM calls instead of real ones.
 
+Every run writes a snapshot to `state/last_run_report.json` and appends one
+line to `state/run_history.jsonl` — an append-only audit trail across runs
+(timestamp, leads reconciled, cost, real vs. simulated calls), which is
+what you'd actually want for monitoring spend over time in production
+rather than only ever seeing the latest run.
+
+## Deployment
+
+**Docker:**
+
+```bash
+docker build -t lead-reconciliation-agent .
+docker run --rm \
+  -e ANTHROPIC_API_KEY=your-key-here \
+  -v $(pwd)/state:/app/state \
+  lead-reconciliation-agent --once
+```
+
+The state volume mount matters — without it, change-detection and the
+run-history log reset on every container restart, defeating the point of
+both.
+
+**Running on a schedule in production:** `python run.py --interval 15` works
+for a long-lived process, but for anything container-orchestrated, the more
+robust pattern is an external scheduler (cron, a Kubernetes CronJob, an ECS
+scheduled task) invoking `docker run ... --once` on a fixed cadence, with
+`/app/state` on persistent storage — that way a crashed run doesn't take
+the whole schedule down with it, which an in-process `--interval` loop
+would.
+
+**Configuration:** `LLM_ESCALATION_THRESHOLD_GBP` and `STALE_SCRAPE_THRESHOLD_DAYS`
+are environment-overridable (see `.env.example`) so retuning either doesn't
+require a code change or redeploy.
+
 ## Project structure
 
 ```
 lead-reconciliation-agent/
-├── .github/workflows/tests.yml  # CI: runs pytest + a live agent run on every push
+├── .github/workflows/tests.yml  # CI: pytest + a live run + a Docker build/run, every push
+├── Dockerfile / .dockerignore
 ├── agent/
 │   ├── sources.py         # loaders + change-detection (hash-based skip logic)
 │   ├── reconciler.py      # trust rules, conflict detection, staleness, stage inference
@@ -197,9 +245,9 @@ lead-reconciliation-agent/
 │   └── planner.py         # orchestrates a run; value-threshold and budget decisions
 ├── data/
 │   ├── crm.csv            # mock CRM export (includes one deliberately malformed row)
-│   ├── inbox.json         # mock email events
+│   ├── inbox.json         # mock email events (includes a live CRM-stale case)
 │   └── scrape.json        # mock scraped prospect list (includes stale entries)
-├── state/                 # runtime state (checksums, last report) — gitignored
+├── state/                 # runtime state (checksums, reports, history) — gitignored
 ├── tests/
 │   ├── test_reconciler.py   # trust rules, conflicts, staleness, malformed data
 │   ├── test_planner.py      # value-threshold and budget logic, in isolation
@@ -226,9 +274,11 @@ for what would be `crm_api.get_updated_since(...)`, `imap.fetch(...)`, and
   an email thread, and a scraped listing don't arrive pre-linked. With more
   time I'd add fuzzy matching on email domain + company name, with a
   confidence score, and a review queue for ambiguous merges.
-- **State is a JSON checksum file, not a database.** Fine for a single-process
-  demo; a real deployment needs a proper store (Postgres/SQLite) so
-  concurrent runs and historical audit trails work.
+- **State is a JSON checksum file + a JSONL history log, not a database.**
+  Good enough for a single-process deployment (this now includes a real
+  append-only run-history log, not just a "last run" snapshot), but
+  concurrent runs from multiple machines would need a proper store
+  (Postgres) instead of a local file.
 - **Fixed trust weights, not learned ones.** Reasonable as a starting point
   and easy to defend in a review, but a mature version would track each
   source's actual historical accuracy per field and adjust weights over

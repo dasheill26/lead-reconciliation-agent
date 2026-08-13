@@ -22,8 +22,9 @@ LLM. See tests/test_planner.py.
 """
 
 from . import sources, reconciler, llm_decider
+import os
 
-LLM_ESCALATION_THRESHOLD_GBP = 10_000
+LLM_ESCALATION_THRESHOLD_GBP = float(os.environ.get("LLM_ESCALATION_THRESHOLD_GBP", 10_000))
 ESTIMATED_COST_PER_LLM_CALL_GBP = 0.0006  # rough estimate for budgeting, refined post-hoc from real usage
 
 

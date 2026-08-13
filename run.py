@@ -13,17 +13,26 @@ log, full cost report, done in a couple of seconds.
 
 import argparse
 import json
+import logging
 import os
+import sys
 from datetime import datetime, timezone
+
+from dotenv import load_dotenv
+load_dotenv()  # populates os.environ from .env if present - must run before agent modules read it
 
 from agent.cost_tracker import CostTracker
 from agent.planner import run as run_reconciliation
 
 OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "state")
 
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s", stream=sys.stderr)
+logger = logging.getLogger("lead_reconciliation_agent")
+
 
 def do_run(budget_gbp: float):
     tracker = CostTracker()
+    logger.info(f"Starting reconciliation run (budget=£{budget_gbp})")
     print(f"Starting reconciliation run at {datetime.now(timezone.utc).isoformat()}...")
     leads = run_reconciliation(tracker, budget_gbp=budget_gbp)
 
@@ -42,10 +51,31 @@ def do_run(budget_gbp: float):
     tracker.print_report(leads_reconciled=len(leads))
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
+    report = {"leads": leads, "cost_report": tracker.report(len(leads))}
+
+    # Snapshot of the most recent run - easy to inspect/diff.
     out_path = os.path.join(OUTPUT_DIR, "last_run_report.json")
     with open(out_path, "w") as f:
-        json.dump({"leads": leads, "cost_report": tracker.report(len(leads))}, f, indent=2)
+        json.dump(report, f, indent=2)
+
+    # Append-only audit trail across every run - what a real deployment
+    # needs for monitoring spend over time, not just the latest snapshot.
+    history_path = os.path.join(OUTPUT_DIR, "run_history.jsonl")
+    with open(history_path, "a") as f:
+        f.write(json.dumps({
+            "run_at": tracker.started_at,
+            "leads_reconciled": len(leads),
+            "conflicts_resolved": len(conflicts),
+            "total_api_calls": sum(tracker.api_calls_by_type.values()),
+            "model_inference_cost_gbp": round(tracker.llm_inference_cost_gbp, 4),
+            "llm_calls_real": tracker.llm_calls_real,
+            "llm_calls_simulated": tracker.llm_calls_simulated,
+        }) + "\n")
+
+    logger.info(f"Run complete: {len(leads)} leads, {len(conflicts)} conflicts, "
+                f"£{tracker.llm_inference_cost_gbp:.4f} inference cost")
     print(f"Full report written to {out_path}")
+    print(f"Run appended to history log: {history_path}")
 
 
 def main():
@@ -57,18 +87,26 @@ def main():
                          help="Max £ budget for LLM escalations this run (default 0.01)")
     args = parser.parse_args()
 
-    if args.interval:
-        import schedule
-        import time
-        print(f"Scheduling reconciliation every {args.interval} minute(s). Ctrl+C to stop.")
-        schedule.every(args.interval).minutes.do(do_run, budget_gbp=args.budget)
-        do_run(budget_gbp=args.budget)  # run once immediately too
-        while True:
-            schedule.run_pending()
-            time.sleep(1)
-    else:
-        # --once is also the default if neither flag is given
-        do_run(budget_gbp=args.budget)
+    try:
+        if args.interval:
+            import schedule
+            import time
+            print(f"Scheduling reconciliation every {args.interval} minute(s). Ctrl+C to stop.")
+            schedule.every(args.interval).minutes.do(do_run, budget_gbp=args.budget)
+            do_run(budget_gbp=args.budget)  # run once immediately too
+            while True:
+                schedule.run_pending()
+                time.sleep(1)
+        else:
+            # --once is also the default if neither flag is given
+            do_run(budget_gbp=args.budget)
+    except KeyboardInterrupt:
+        print("\nStopped.")
+        sys.exit(0)
+    except Exception as e:
+        logger.exception("Reconciliation run failed")
+        print(f"\nRun failed: {e}", file=sys.stderr)
+        sys.exit(1)
 
 
 if __name__ == "__main__":

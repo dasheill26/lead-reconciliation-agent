@@ -28,3 +28,9 @@ jobs:
 
       - name: Run agent end-to-end (simulated mode, no API key needed)
         run: python run.py --once
+
+      - name: Build Docker image
+        run: docker build -t lead-reconciliation-agent-test .
+
+      - name: Run agent inside the built image
+        run: docker run --rm lead-reconciliation-agent-test
