@@ -64,18 +64,10 @@ def do_run(budget_gbp: float):
 
     # Append-only audit trail across every run - what a real deployment
     # needs for monitoring spend over time, not just the latest snapshot.
+    # Shared method also used by webapp.py, so both surfaces write the
+    # same file consistently.
     history_path = os.path.join(OUTPUT_DIR, "run_history.jsonl")
-    with open(history_path, "a") as f:
-        f.write(json.dumps({
-            "run_at": tracker.started_at,
-            "leads_reconciled": len(leads),
-            "conflicts_resolved": len(conflicts),
-            "compute_time_seconds": cost_report["compute_time_seconds"],
-            "total_api_calls": cost_report["total_api_calls"],
-            "model_inference_cost_gbp": cost_report["model_inference_cost_gbp"],
-            "llm_calls_real": tracker.llm_calls_real,
-            "llm_calls_simulated": tracker.llm_calls_simulated,
-        }) + "\n")
+    tracker.append_to_history(cost_report, len(conflicts), history_path)
 
     logger.info(f"Run complete: {len(leads)} leads, {len(conflicts)} conflicts, "
                 f"£{tracker.llm_inference_cost_gbp:.4f} inference cost")

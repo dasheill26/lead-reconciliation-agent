@@ -91,6 +91,28 @@ class CostTracker:
             "decisions": self.decisions,
         }
 
+    def append_to_history(self, report: dict, conflicts_resolved: int, history_path: str):
+        """Appends one line to the append-only run-history log, using the
+        SAME report dict the caller already computed via .report() - never
+        recomputes it, so compute_time_seconds can't disagree with what was
+        printed or saved elsewhere for this run. Shared by both run.py (CLI)
+        and webapp.py (dashboard) so every real run gets recorded regardless
+        of which surface triggered it."""
+        import json
+        import os
+        os.makedirs(os.path.dirname(history_path), exist_ok=True)
+        with open(history_path, "a") as f:
+            f.write(json.dumps({
+                "run_at": self.started_at,
+                "leads_reconciled": report["leads_reconciled"],
+                "conflicts_resolved": conflicts_resolved,
+                "compute_time_seconds": report["compute_time_seconds"],
+                "total_api_calls": report["total_api_calls"],
+                "model_inference_cost_gbp": report["model_inference_cost_gbp"],
+                "llm_calls_real": self.llm_calls_real,
+                "llm_calls_simulated": self.llm_calls_simulated,
+            }) + "\n")
+
     def print_report(self, report: dict):
         r = report
         print("\n" + "=" * 60)

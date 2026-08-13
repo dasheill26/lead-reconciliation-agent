@@ -88,12 +88,30 @@
   td.note { color: var(--muted); font-size: 0.83rem; max-width: 380px; }
   .stage {
     display: inline-block; padding: 0.16rem 0.55rem; border-radius: 6px;
-    font-size: 0.76rem; font-weight: 600; background: var(--accent-dim); color: var(--accent);
+    font-size: 0.76rem; font-weight: 600;
   }
+  .stage.stage-new { background: rgba(135,146,163,0.14); color: var(--muted); }
+  .stage.stage-emailed { background: var(--blue-dim); color: var(--blue); }
+  .stage.stage-replied { background: var(--purple-dim); color: var(--purple); }
+  .stage.stage-qualified { background: var(--accent-dim); color: var(--accent); }
+  .stage.stage-prospect_not_in_crm { background: var(--warn-dim); color: var(--warn); }
   .conflict-flag {
     color: var(--warn); font-size: 0.72rem; font-weight: 700; margin-top: 0.3rem;
     text-transform: uppercase; letter-spacing: 0.03em;
   }
+  .runs-trend {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+    padding: 1.1rem 1.3rem; display: flex; align-items: flex-end; gap: 0.9rem;
+  }
+  .runs-trend .bar-col { display: flex; flex-direction: column; align-items: center; gap: 0.4rem; flex: 1; }
+  .runs-trend .bar {
+    width: 100%; max-width: 34px; background: var(--accent); border-radius: 4px 4px 0 0;
+    min-height: 4px;
+  }
+  .runs-trend .bar.zero { background: rgba(135,146,163,0.25); }
+  .runs-trend .bar-label { font-size: 0.68rem; color: var(--muted); font-family: "JetBrains Mono", monospace; }
+  .runs-trend .bar-value { font-size: 0.7rem; color: var(--text); font-weight: 700; }
+  .trend-note { color: var(--muted); font-size: 0.83rem; margin-top: 0.9rem; }
   .decision-log {
     background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
     padding: 0.4rem 1rem; font-family: "JetBrains Mono", ui-monospace, monospace;
@@ -167,7 +185,7 @@
         <td data-label="ID">{{ l.lead_id }}</td>
         <td data-label="Name">{{ l.name or "—" }}</td>
         <td data-label="CRM Stage">{{ l.crm_stage or "—" }}</td>
-        <td data-label="Canonical Stage"><span class="stage">{{ l.canonical_stage or "—" }}</span>
+        <td data-label="Canonical Stage"><span class="stage stage-{{ l.canonical_stage or 'new' }}">{{ l.canonical_stage or "—" }}</span>
           {% if l.conflict_type %}<div class="conflict-flag">{{ l.conflict_type }}</div>{% endif %}
         </td>
         <td data-label="Resolution" class="note">{{ l.resolution_note or "" }}</td>
@@ -175,6 +193,23 @@
       {% endfor %}
     </table>
   </section>
+
+  {% if recent_runs|length > 1 %}
+  <section>
+    <h2>Recent Runs — API Calls Per Run</h2>
+    <div class="runs-trend">
+      {% set max_calls = (recent_runs | map(attribute='total_api_calls') | list | max) or 1 %}
+      {% for run in recent_runs %}
+      <div class="bar-col">
+        <div class="bar-value">{{ run.total_api_calls }}</div>
+        <div class="bar {% if run.total_api_calls == 0 %}zero{% endif %}" style="height: {{ (run.total_api_calls / max_calls * 90) | round(0) if max_calls else 4 }}px"></div>
+        <div class="bar-label">#{{ loop.index }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    <p class="trend-note">Each bar is one real page load on this live server. Lower bars mean the change-detection logic correctly skipped re-fetching sources that hadn't changed since the previous run — this is the actual, unedited history from <code>state/run_history.jsonl</code>, not staged data.</p>
+  </section>
+  {% endif %}
 
   <section>
     <h2>Cost &amp; Decision Log</h2>

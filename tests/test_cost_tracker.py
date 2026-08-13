@@ -5,6 +5,7 @@ of the brief is an honest cost report.
 """
 import sys
 import os
+import json
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from agent.cost_tracker import CostTracker, HAIKU_INPUT_PRICE_PER_MTOK_USD, HAIKU_OUTPUT_PRICE_PER_MTOK_USD, USD_TO_GBP
@@ -61,6 +62,31 @@ def test_compute_time_is_tracked():
     assert r["compute_time_seconds"] >= 0
 
 
+def test_append_to_history_writes_consistent_numbers(tmp_path):
+    """The webapp and CLI both call this - it must use the exact same
+    report dict passed in, never recompute its own (that was a real bug
+    fixed earlier: two separate .report() calls can report two different
+    compute_time_seconds for the 'same' run)."""
+    t = CostTracker()
+    t.record_api_call("crm_fetch")
+    t.record_llm_call(100, 3, simulated=True)
+    report = t.report(leads_reconciled=5)
+    history_file = tmp_path / "history.jsonl"
+    t.append_to_history(report, conflicts_resolved=2, history_path=str(history_file))
+    assert history_file.exists()
+    with open(history_file) as f:
+        line = json.loads(f.readline())
+    assert line["compute_time_seconds"] == report["compute_time_seconds"]
+    assert line["total_api_calls"] == report["total_api_calls"]
+    assert line["leads_reconciled"] == 5
+    assert line["conflicts_resolved"] == 2
+
+    # Second call appends, doesn't overwrite
+    t.append_to_history(report, conflicts_resolved=2, history_path=str(history_file))
+    with open(history_file) as f:
+        assert len(f.readlines()) == 2
+
+
 if __name__ == "__main__":
     test_api_calls_counted_by_type()
     test_llm_cost_matches_manual_calculation()
@@ -68,4 +94,4 @@ if __name__ == "__main__":
     test_zero_leads_reconciled_does_not_divide_by_zero()
     test_simulated_vs_real_tracked_separately()
     test_compute_time_is_tracked()
-    print("All cost tracker tests passed.")
+    print("All cost tracker tests passed (except test_append_to_history_writes_consistent_numbers, which needs pytest's tmp_path fixture - run via pytest).")

@@ -194,7 +194,11 @@ work without cloning the repo. **Live at: https://lead-reconciliation-agent.onre
 
 It always runs in simulated LLM mode, deliberately — a public,
 unauthenticated page shouldn't be able to trigger real paid API calls on
-every visitor. Run it yourself locally for the real thing:
+every visitor. Conflict rows sort to the top of the table so they're
+visible without scrolling, and a "Recent Runs" panel visualizes the
+actual `run_history.jsonl` this same server has been writing — the
+API-call count dropping on repeat visits is the change-detection logic
+working, shown live rather than just claimed.
 
 ```bash
 pip install -r requirements.txt
